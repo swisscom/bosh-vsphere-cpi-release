@@ -1,1 +1,6 @@
-{}
+iso9660wrap/iso9660wrap-darwin-amd64:
+  size: 1936960
+  sha: 18fb673a5f1dadf4c435ea80672e21be5805d335
+iso9660wrap/iso9660wrap-linux-amd64:
+  size: 1948575
+  sha: bd14fce1f974eb9fe0caeeba980d6d202a1f964c
