@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-mkdir  bosh-vsphere-cpi-networking-release
+set -e
 
 pushd bosh-cpi-src
     ./compile-iso9660wrap.sh
-    ./src/vsphere_cpi/vendor_gems
+    pushd src/vsphere_cpi
+        ./vendor_gems
+    popd
     bosh create-release --tarball bosh-vsphere-cpi-networking-release.tgz --force
 popd
 
