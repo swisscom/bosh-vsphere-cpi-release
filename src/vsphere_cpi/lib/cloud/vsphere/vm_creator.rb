@@ -90,6 +90,9 @@ module VSphereCloud
         raise "Unable to parse vmx options: 'vmx_options' is not a Hash"
       end
 
+
+      enable_gpu = true
+
       # Clone VM
       @logger.info("Cloning vm: #{replicated_stemcell_vm} to #{vm_config.name}")
       created_vm_mob = @client.wait_for_task do
@@ -104,7 +107,12 @@ module VSphereCloud
           datastore_cluster: datastore_cluster
         )
       end
+
+
+
       created_vm = Resources::VM.new(vm_config.name, created_vm_mob, @client, @logger)
+
+      add_gpu_device(replicated_stemcell_vm, created_vm) if enable_gpu
 
       # Set agent env settings
       begin
@@ -150,6 +158,35 @@ module VSphereCloud
       end
 
       created_vm
+    end
+
+    def add_gpu_device(replicated_stemcell_vm, created_vm)
+
+      config_spec = VimSdk::Vim::Vm::ConfigSpec.new
+
+      qct = created_vm.mob.environment_browser.query_config_target
+      sysid=qct.pci_passthrough.map { |x| [x.pci_device.id, x.system_id]}.to_h
+
+      device_config_spec = VimSdk::Vim::Vm::Device::VirtualDeviceSpec.new
+      dev = VimSdk::Vim::Vm::Device::VirtualPCIPassthrough.new
+      dev.key = -1
+      dev.controller_key=replicated_stemcell_vm.pci_controller.key
+
+      back = VimSdk::Vim::Vm::Device::VirtualPCIPassthrough::DeviceBackingInfo.new
+      back.id="0000:46:00.0"
+      back.system_id=sysid[back.id]
+      back.vendor_id=4318
+      back.device_id="0ff2"
+
+      dev.backing=back
+      device_config_spec.device=dev
+      device_config_spec.operation = VimSdk::Vim::Vm::Device::VirtualDeviceSpec::Operation::ADD
+      config_spec.device_change << device_config_spec
+      config_spec.memory_reservation_locked_to_max=true
+
+      require 'pry-byebug'
+      binding.pry
+      @client.reconfig_vm(created_vm.mob, config_spec)
     end
 
     private
