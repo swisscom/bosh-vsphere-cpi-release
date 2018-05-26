@@ -84,13 +84,16 @@ module VSphereCloud
     end
 
     def power_on_vm(datacenter, vm)
-      wait_for_task do
-        result = wait_for_task do
-          datacenter.power_on_vm([vm], nil)
-        end
-
-        raise 'Recommendations were detected, you may be running in Manual DRS mode. Aborting.' if result.recommendations.any?
-
+      result = wait_for_task do
+        option = Vim::Option::OptionValue.new
+        option.key = 'OverrideAutomationLevel'
+        option.value = 'manual'
+        datacenter.power_on_vm([vm], [option])
+      end
+      # raise 'Recommendations were detected, you may be running in Manual DRS mode. Aborting.' if result.recommendations.any?
+      if result.recommendations.any?
+        result.recommendations.first.target.apply_recommendation(result.recommendations.first.key)
+      else
         vms_powering_on = result.attempted
         if vms_powering_on.empty?
           # Since we are only powering on single vm, the not_attempted member
@@ -99,7 +102,9 @@ module VSphereCloud
           fault = result.not_attempted.first.fault
           raise VSphereCloud::VMPowerOnError.new(fault), "Could not power on VM '#{vm}'"
         end
-        vms_powering_on.first.task
+        wait_for_task do
+          vms_powering_on.first.task
+        end
       end
     end
 

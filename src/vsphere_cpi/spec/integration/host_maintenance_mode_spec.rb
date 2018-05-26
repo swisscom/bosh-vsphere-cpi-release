@@ -37,7 +37,7 @@ describe 'Give a cluster with DRS On ', host_maintenance: true  do
 
     # We turn the maintenance mode ON for half of the hosts (rounding off to the floor) in a cluster
     before do
-      turn_maintenance_on_for_half_hosts(cpi, @cluster_name_maintenance)
+      # turn_maintenance_on_for_half_hosts(cpi, @cluster_name_maintenance)
     end
     it 'cpi should be able to replicate stemcell (create vm and create ephemeral disk) ' do
       begin
@@ -69,7 +69,7 @@ describe 'Give a cluster with DRS On ', host_maintenance: true  do
 
     end
     after do
-      turn_maintenance_off_for_all_hosts(cpi, @cluster_name_maintenance)
+      # turn_maintenance_off_for_all_hosts(cpi, @cluster_name_maintenance)
     end
   end
 
