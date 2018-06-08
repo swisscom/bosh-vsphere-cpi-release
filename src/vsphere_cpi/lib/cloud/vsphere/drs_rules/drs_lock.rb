@@ -29,6 +29,8 @@ module VSphereCloud
 
     private
 
+    attr_reader :drs_lock_name
+
     def acquire_lock
       # vm_attribute_manager.create will raise DuplicateName exception if that field already exists
       # Retrying until the call succeeds ensures that only one CPI process is modifying a DRS Group at a time
