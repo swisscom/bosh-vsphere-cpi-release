@@ -299,6 +299,23 @@ module VSphereCloud
         ]
       )
 
+      datacenter_network_traversal_spec = PC::TraversalSpec.new(
+        :name => "datacenterNetworkTraversalSpec",
+        :type => Vim::Datacenter,
+        :path => "network",
+        :skip => false,
+      )
+
+      datacenter_network_folder_traversal_spec = PC::TraversalSpec.new(
+        :name => "datacenterNetworkFolderTraversalSpec",
+        :type => Vim::Datacenter,
+        :path => "networkFolder",
+        :skip => false,
+        :select_set => [
+          PC::SelectionSpec.new(:name => "folderTraversalSpec")
+        ]
+      )
+
       folder_traversal_spec = PC::TraversalSpec.new(
         :name => "folderTraversalSpec",
         :type => Vim::Folder,
@@ -312,7 +329,9 @@ module VSphereCloud
           PC::SelectionSpec.new(:name => "computeResourceDatastoreTraversalSpec"),
           PC::SelectionSpec.new(:name => "computeResourceHostTraversalSpec"),
           PC::SelectionSpec.new(:name => "hostVmTraversalSpec"),
-          PC::SelectionSpec.new(:name => "resourcePoolVmTraversalSpec")
+          PC::SelectionSpec.new(:name => "resourcePoolVmTraversalSpec"),
+          PC::SelectionSpec.new(:name => "datacenterNetworkFolderTraversalSpec"),
+          PC::SelectionSpec.new(:name => "datacenterNetworkTraversalSpec")
         ]
       )
 
@@ -329,6 +348,8 @@ module VSphereCloud
           resource_pool_traversal_spec,
           host_vm_traversal_spec,
           resource_pool_vm_traversal_spec,
+          datacenter_network_traversal_spec,
+          datacenter_network_folder_traversal_spec
         ]
       )
       PC::FilterSpec.new(:prop_set => property_specs, :object_set => [obj_spec])

@@ -225,7 +225,13 @@ module VSphereCloud
           valid_networks = network_container.child_entity
         end
       else
-        valid_networks = datacenter.mob.network
+        valid_networks = cloud_searcher.get_managed_objects(
+          VimSdk::Vim::Network,
+          root: datacenter.mob,
+          include_name: true
+        ).map do |network_tuple|
+          network_tuple[1]
+        end
       end
 
       target_network = nil
