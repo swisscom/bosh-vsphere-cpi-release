@@ -9,11 +9,11 @@ source source-ci/ci/shared/tasks/setup-env-proxy.sh
 # outputs
 output_dir=$(realpath new-director-state/)
 
-cp -r new-director-config/director.yml ${output_dir}
-cp -r old-director-state/*-state.json ${output_dir}
-cp old-director-state/creds.yml ${output_dir}
-cp old-director-state/director.env ${output_dir}
-source old-director-state/director.env
+cp new-director-config/director.yml ${output_dir}
+cp director-state-v65/director-state.json ${output_dir}
+cp director-creds-v65/creds.yml ${output_dir}
+cp director-env-v65/director.env ${output_dir}
+source director-env-v65/director.env
 
 # deployment manifest references releases and stemcells relative to itself...make it true
 # these resources are also used in the teardown step

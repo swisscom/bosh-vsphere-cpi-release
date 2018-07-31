@@ -9,7 +9,9 @@ inputs:
   - name: stemcell
   - name: bosh-cli
   - name: new-director-config
-  - name: old-director-state
+  - name: director-state-v65
+  - name: director-env-v65
+  - name: director-creds-v65
   - name: source-ci
   - name: environment
 

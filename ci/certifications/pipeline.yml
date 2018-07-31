@@ -80,67 +80,67 @@ jobs:
             put: pool-6.5
             params : {release: environment}
 
-  - name: test-upgrade
-    plan:
-      - aggregate:
-        - get: source-ci
-        - {get: environment,     trigger: true,  passed: [lock-test-upgrade], resource: pool-6.5 }
-        - {get: bosh-release,     trigger: false, passed: [lock-test-upgrade]}
-        - {get: cpi-release,      trigger: false, passed: [lock-test-upgrade]}
-        - {get: stemcell-trusty,  trigger: false, passed: [lock-test-upgrade], resource: ubuntu-stemcell}
-        - {get: stemcell,         trigger: false, resource: ubuntu-xenial-stemcell}
-        - {get: certification,    trigger: false}
-        - {get: bosh-cli,         trigger: false}
-        - {get: centos-stemcell,  trigger: false} # pass-through
-        - {get: old-stemcell,     trigger: false}
-        - {get: old-bosh-release, trigger: false, version: {version: "255.8"}, resource: bosh-release}
-        - {get: old-cpi-release,  trigger: false, version: {version: "45"},  resource: cpi-release}
-        - {get: bosh-deployment,  trigger: false}
-      - <<: *prepare-director-old
-        input_mapping:
-          stemcell:     old-stemcell
-          bosh-release: old-bosh-release
-          cpi-release:  old-cpi-release
-      - do:
-        - <<: *deploy-director
-          input_mapping:
-            stemcell:     old-stemcell
-            bosh-release: old-bosh-release
-            cpi-release:  old-cpi-release
-        - put: director-state-v65
-          params:
-            file: director-state/director.env
-        - <<: *update-cloud-config
-        - task: create-deployment
-          file: source-ci/ci/tasks/create-deployment.yml
-          params:
-            STEMCELL_NAME: bosh-vsphere-esxi-ubuntu-xenial-go_agent
-        - <<: *prepare-director-latest
-        - task: test-upgrade
-          file: source-ci/ci/tasks/test-upgrade.yml
-          input_mapping:
-            old-director-state: director-state
-            new-director-config: director-config
-          output_mapping:
-            new-director-state: director-state
-        on_failure:
-          aggregate:
-          - put: pool-6.5
-            params : {remove: environment}
-          - put: notify
-            params:
-              username: 'CPI-Doctor'
-              text: |
-                The test-upgrade test failed. Check it out at: https://pksci.vcna.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME
-        ensure:
-          do:
-            - <<: *teardown
+#  - name: test-upgrade
+#    plan:
+#      - aggregate:
+#        - get: source-ci
+#        - {get: environment,     trigger: true,  passed: [lock-test-upgrade], resource: pool-6.5 }
+#        - {get: bosh-release,     trigger: false, passed: [lock-test-upgrade]}
+#        - {get: cpi-release,      trigger: false, passed: [lock-test-upgrade]}
+#        - {get: stemcell-trusty,  trigger: false, passed: [lock-test-upgrade], resource: ubuntu-stemcell}
+#        - {get: stemcell,         trigger: false, resource: ubuntu-xenial-stemcell}
+#        - {get: certification,    trigger: false}
+#        - {get: bosh-cli,         trigger: false}
+#        - {get: centos-stemcell,  trigger: false} # pass-through
+#        - {get: old-stemcell,     trigger: false}
+#        - {get: old-bosh-release, trigger: false, version: {version: "255.8"}, resource: bosh-release}
+#        - {get: old-cpi-release,  trigger: false, version: {version: "45"},  resource: cpi-release}
+#        - {get: bosh-deployment,  trigger: false}
+#      - <<: *prepare-director-old
+#        input_mapping:
+#          stemcell:     old-stemcell
+#          bosh-release: old-bosh-release
+#          cpi-release:  old-cpi-release
+#      - do:
+#        - <<: *deploy-director
+#          input_mapping:
+#            stemcell:     old-stemcell
+#            bosh-release: old-bosh-release
+#            cpi-release:  old-cpi-release
+#        - put: director-state-v65
+#          params:
+#            file: director-state/director.env
+#        - <<: *update-cloud-config
+#        - task: create-deployment
+#          file: source-ci/ci/tasks/create-deployment.yml
+#          params:
+#            STEMCELL_NAME: bosh-vsphere-esxi-ubuntu-xenial-go_agent
+#        - <<: *prepare-director-latest
+#        - task: test-upgrade
+#          file: source-ci/ci/tasks/test-upgrade.yml
+#          input_mapping:
+#            old-director-state: director-state
+#            new-director-config: director-config
+#          output_mapping:
+#            new-director-state: director-state
+#        on_failure:
+#          aggregate:
+#          - put: pool-6.5
+#            params : {remove: environment}
+#          - put: notify
+#            params:
+#              username: 'CPI-Doctor'
+#              text: |
+#                The test-upgrade test failed. Check it out at: https://pksci.vcna.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME
+#        ensure:
+#          do:
+#            - <<: *teardown
 
   - name: deploy-director
     plan:
     - aggregate:
       - get: source-ci
-      - {get: environment,     trigger: true,   resource: pool-6.5 }
+      - {get: environment,      trigger: true,  passed: [lock-test-upgrade], resource: pool-6.5 }
       - {get: bosh-release,     trigger: false}
       - {get: cpi-release,      trigger: false}
       - {get: stemcell-trusty,  trigger: false, resource: ubuntu-stemcell}
@@ -164,7 +164,78 @@ jobs:
         cpi-release:  old-cpi-release
     - put: director-state-v65
       params:
+        file: director-state/director-state.json
+    - put: director-env-v65
+      params:
         file: director-state/director.env
+    - put: director-creds-v65
+      params:
+        file: director-state/creds.yml
+
+  - name: test-upgrade
+    plan:
+      - aggregate:
+        - {get: source-ci, passed: [deploy-director]}
+        - {get: director-state-v65, trigger: false, passed: [deploy-director]}
+        - {get: director-env-v65,   trigger: false, passed: [deploy-director]}
+        - {get: director-creds-v65, trigger: false, passed: [deploy-director]}
+        - {get: environment,      trigger: true,  passed: [lock-test-upgrade], resource: pool-6.5 }
+        - {get: bosh-release,     trigger: false, passed: [lock-test-upgrade]}
+        - {get: cpi-release,      trigger: false, passed: [lock-test-upgrade]}
+        #TODO remove ubuntu-stemcell resource for certification.
+        - {get: stemcell-trusty,  trigger: false, passed: [lock-test-upgrade], resource: ubuntu-stemcell}
+        - {get: stemcell,         trigger: false, resource: ubuntu-xenial-stemcell}
+        - {get: certification,    trigger: false}
+        - {get: bosh-cli,         trigger: false}
+        - {get: centos-stemcell,  trigger: false} # pass-through
+        - {get: old-stemcell,     trigger: false}
+        - {get: old-bosh-release, trigger: false, version: {version: "255.8"}, resource: bosh-release}
+        - {get: old-cpi-release,  trigger: false, version: {version: "45"},  resource: cpi-release}
+        - {get: bosh-deployment,  trigger: false}
+      - <<: *update-cloud-config
+        input_mapping:
+          director-state: director-env-v65
+      - task: create-deployment
+        file: source-ci/ci/tasks/create-deployment.yml
+        input_mapping:
+          director-state: director-env-v65
+        params:
+          STEMCELL_NAME: bosh-vsphere-esxi-ubuntu-xenial-go_agent
+      - <<: *prepare-director-latest
+      - task: test-upgrade
+        file: source-ci/ci/tasks/test-upgrade.yml
+        input_mapping:
+          new-director-config: director-config
+#          old-director-state: director-state-v65
+#          old-director-env:   director-env-v65
+#          old-director-creds: director-creds-v65
+#        output_mapping:
+#          new-director-state: director-state
+#          new-director-env: director-env
+#          new-director-creds: director-creds
+      - put: director-state-v65
+        params:
+          file: new-director-state/director-state.json
+      - put: director-env-v65
+        params:
+          file: new-director-state/director.env
+      - put: director-creds-v65
+        params:
+          file: new-director-state/creds.yml
+
+
+#        on_failure:
+#          aggregate:
+#          - put: pool-6.5
+#            params : {remove: environment}
+#          - put: notify
+#            params:
+#              username: 'CPI-Doctor'
+#              text: |
+#                The test-upgrade test failed. Check it out at: https://pksci.vcna.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME
+#        ensure:
+#          do:
+#            - <<: *teardown
 
   - name: unlock-test-upgrade
     plan:
@@ -471,8 +542,25 @@ resources:
   - name: director-state-v65
     type: s3
     source:
+      region_name: us-west-1
       bucket: {{certification__bucket}}
-      versioned_file: director-state-v6.5
+      versioned_file: director-state-v6.5/director-state.json
+      access_key_id: {{certification__bucket_access_key}}
+      secret_access_key: {{certification__bucket_secret_key}}
+  - name: director-creds-v65
+    type: s3
+    source:
+      region_name: us-west-1
+      bucket: {{certification__bucket}}
+      versioned_file: director-state-v6.5/creds.yml
+      access_key_id: {{certification__bucket_access_key}}
+      secret_access_key: {{certification__bucket_secret_key}}
+  - name: director-env-v65
+    type: s3
+    source:
+      region_name: us-west-1
+      bucket: {{certification__bucket}}
+      versioned_file: director-state-v6.5/director.env
       access_key_id: {{certification__bucket_access_key}}
       secret_access_key: {{certification__bucket_secret_key}}
   - name: receipt
@@ -550,7 +638,7 @@ resources:
     type: git
     source:
       uri:         git@github.com:cloudfoundry-incubator/bosh-vsphere-cpi-release.git
-      branch:      {{vcpi_branch}}
+      branch:      chore/xenial-stemcell
       private_key: {{github_deployment_key__bosh-vsphere-cpi-release}}
       paths:       [ci]
   - name: syslog-release
