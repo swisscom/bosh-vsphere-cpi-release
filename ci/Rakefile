@@ -168,9 +168,8 @@ task 'pipeline:certification', [:name] => 'certifications/pipeline.yml' do |t, a
 
   sh '/bin/bash', '-ec', [
     "fly -t #{CONCOURSE.shellescape} set-pipeline",
-    "-p #{args.name.shellescape}",
+    "-p xenial-certification",
     "-c #{t.prerequisites.first.shellescape}",
-    "-v vcpi_branch=#{branch.shellescape}",
     "-v dbc_host=#{DBCHOST.shellescape}",
     "-v dbc_user=#{DBCUSER.shellescape}",
     "-v dbc_key=\"$(cat #{dbc_ssh_key.shellescape})\"",
