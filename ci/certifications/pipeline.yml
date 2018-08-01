@@ -206,13 +206,6 @@ jobs:
         file: source-ci/ci/tasks/test-upgrade.yml
         input_mapping:
           new-director-config: director-config
-#          old-director-state: director-state-v65
-#          old-director-env:   director-env-v65
-#          old-director-creds: director-creds-v65
-#        output_mapping:
-#          new-director-state: director-state
-#          new-director-env: director-env
-#          new-director-creds: director-creds
       - put: director-state-v65
         params:
           file: new-director-state/director-state.json
@@ -222,7 +215,18 @@ jobs:
       - put: director-creds-v65
         params:
           file: new-director-state/creds.yml
+      - put: director-config-v65
+        params:
+          file: new-director-state/director.yml
 
+  - name: teardown-director
+    plan:
+    - aggregate:
+      - {get: source-ci, passed: [test-upgrade]}
+      - {get: director-state-v65, trigger: false, passed: [test-upgrade]}
+      - {get: director-env-v65,   trigger: false, passed: [test-upgrade]}
+      - {get: director-config-v65,   trigger: false, passed: [test-upgrade]}
+    - <<: *teardown
 
 #        on_failure:
 #          aggregate:
@@ -539,6 +543,14 @@ resource_types:
       repository: cfcommunity/slack-notification-resource
 
 resources:
+  - name: director-config-v65
+    type: s3
+    source:
+      region_name: us-west-1
+      bucket: {{certification__bucket}}
+      versioned_file: director-state-v6.5/director.yml
+      access_key_id: {{certification__bucket_access_key}}
+      secret_access_key: {{certification__bucket_secret_key}}
   - name: director-state-v65
     type: s3
     source:
