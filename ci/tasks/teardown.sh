@@ -29,5 +29,5 @@ pushd director-state-v65 > /dev/null
   set -e
 
   echo "deleting existing BOSH Director VM..."
-  bosh -n delete-env --state director-state.json --vars-store creds.yml -v director_name=bosh director.yml
+  bosh -n delete-env --vars-store creds.yml -v director_name=bosh director.yml
 popd
