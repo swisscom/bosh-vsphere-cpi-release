@@ -17,6 +17,7 @@ fi
 cp director-config-v65/director.yml director-state-v65
 cp director-creds-v65/creds.yml director-state-v65
 cp director-env-v65/director.env director-state-v65
+mkdir -p director-state-v65/cpi-release/
 cp cpi-release/*.tgz director-state-v65/cpi-release/
 
 pushd director-state-v65 > /dev/null
