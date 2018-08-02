@@ -179,8 +179,6 @@ jobs:
         - {get: bosh-release,    trigger: true}
         - {get: cpi-release,     trigger: true}
         - {get: stemcell,        trigger: true, resource: ubuntu-xenial-stemcell}
-        - get: after-midnight
-          trigger: true
         - get: source-ci
       - do:
         - put: environment
@@ -246,8 +244,6 @@ jobs:
         - {get: bosh-release,    trigger: true}
         - {get: cpi-release,     trigger: true}
         - {get: stemcell,        trigger: true, resource: ubuntu-xenial-stemcell}
-        - get: after-midnight
-          trigger: true
         - get: source-ci
       - do:
         - put: environment
@@ -314,8 +310,6 @@ jobs:
         - {get: bosh-release,    trigger: true}
         - {get: cpi-release,     trigger: true}
         - {get: stemcell,        trigger: true, resource: ubuntu-xenial-stemcell}
-        - get: after-midnight
-          trigger: true
         - get: source-ci
       - do:
         - put: environment
@@ -352,15 +346,6 @@ jobs:
           params:
             <<: *run-bats-params
             STEMCELL_NAME: bosh-vsphere-esxi-ubuntu-xenial-go_agent
-        on_failure:
-          aggregate:
-          - put: pool-6.5
-            params : {remove: environment}
-          - put: notify
-            params:
-              username: 'CPI-Doctor'
-              text: |
-                The bats-ubuntu test failed. Check it out at: https://pksci.vcna.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME
         ensure:
           do:
             - <<: *teardown
@@ -437,11 +422,6 @@ resources:
     type: slack-notification
     source:
       url: {{slack_webhook}}
-  - name: after-midnight
-    type: time
-    source:
-      start: 12:00 AM -0700
-      stop: 2:00 AM -0700
   - name: certification
     type: git
     source:
