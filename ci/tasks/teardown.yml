@@ -4,6 +4,7 @@ image_resource:
 
 inputs:
   - name: source-ci
+  - name: cpi-release
   - name: director-state-v65
   - name: director-env-v65
   - name: director-creds-v65
