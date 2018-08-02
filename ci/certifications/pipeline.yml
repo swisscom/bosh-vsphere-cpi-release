@@ -164,8 +164,8 @@ jobs:
       - {get: director-env-v65,   trigger: false, passed: [test-upgrade]}
       - {get: director-config-v65,trigger: false, passed: [test-upgrade]}
       - {get: director-creds-v65, trigger: false, passed: [test-upgrade]}
-      - {get: cpi-release,      trigger: false, passed: [lock-test-upgrade]}
-      - {get: environment,      trigger: true,  passed: [test-upgrade], resource: pool-6.5 }
+      - {get: cpi-release}
+      - {get: environment,      trigger: false,  passed: [test-upgrade], resource: pool-6.5 }
     - <<: *teardown
 
   - name: unlock-test-upgrade

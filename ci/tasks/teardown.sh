@@ -2,6 +2,8 @@
 
 source source-ci/ci/shared/tasks/setup-env-proxy.sh
 
+set -ex
+
 if [ ! -e director-state-v65/director-state.json ]; then
   echo "director-state.json does not exist, skipping..."
   exit 0
