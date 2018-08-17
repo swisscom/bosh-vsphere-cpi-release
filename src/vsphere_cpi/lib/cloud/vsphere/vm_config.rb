@@ -11,8 +11,10 @@ module VSphereCloud
       vmtype_hw_version.nil? ? global_hw_version : vmtype_hw_version
     end
 
+    # the maximum length of name can be 80 characters
+    # name is instance_group_name-vm-'uuid'
     def name
-      @vm_cid ||= "vm-#{SecureRandom.uuid}"
+      @vm_cid ||= "#{truncated_instance_group_name}vm-#{SecureRandom.uuid}"
     end
 
     def cluster_placements
@@ -81,7 +83,7 @@ module VSphereCloud
 
 
     def bosh_group
-      if !agent_env['bosh'].nil? then
+      if !agent_env&.dig('bosh').nil? then
         return agent_env['bosh']['group']
       else
         return nil
@@ -172,6 +174,18 @@ module VSphereCloud
       raise Bosh::Clouds::CloudError,
         'No valid placement found for VM compute and storage requirement' if @cluster_placement.first.nil?
       @cluster_placement
+    end
+
+    # groups is a list of director-name, deployment-name, instance_name
+    # followed by various combinations of above 3 attributes
+    # this method returns truncated instance_group_name with suffix '-' if present
+    def truncated_instance_group_name
+      if !agent_env&.dig('bosh', 'groups').nil? then
+        group_name = agent_env['bosh']['groups'][2].to_s
+        group_name.empty? ? '' : group_name[0..39] + '-'
+      else
+        return ''
+      end
     end
   end
 end

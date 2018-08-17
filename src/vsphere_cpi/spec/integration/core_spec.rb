@@ -51,4 +51,16 @@ context 'exercising core CPI functionality' do
       vm_lifecycle(@cpi, [@existing_volume_id], vm_type, network_spec, @stemcell_id)
     end
   end
+
+  context 'when bosh groups is present in environment hash' do
+    let(:env) { {'bosh' => {
+        'groups' => %w[director-name deployment-name vcpi-instance-name]
+    } } }
+    it 'prefixes vm name with instance_group_name' do
+      vm_lifecycle(@cpi, [], vm_type, network_spec, @stemcell_id, env) do |vm_id|
+        vm = @cpi.vm_provider.find(vm_id)
+        expect(vm.mob.name).to match /vcpi-instance-name-vm-.*/
+      end
+    end
+  end
 end

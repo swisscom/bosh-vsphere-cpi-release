@@ -47,7 +47,7 @@ module VSphereCloud
     end
 
     describe '#name' do
-      let(:input) { {} }
+      let(:input) { { :agent_env => {} } }
       it 'returns a valid VM name' do
         name = vm_config.name
         expect(name).to match /vm-.*/
@@ -57,6 +57,16 @@ module VSphereCloud
         name = vm_config.name
         expect(name).to match /vm-.*/
         expect(vm_config.name).to eq name
+      end
+      context "when bosh['groups'] is set in agent_env" do
+        let(:groups) { %w[director-name deployment-name instance-group-name-is-very-long-truncate-it] }
+        let(:input) { {:agent_env => {'bosh' =>  { 'groups' => groups }}} }
+
+        it 'is prefixed with 1st 40 characters of instance_group name' do
+          name = vm_config.name
+          expect(name).to match /instance-group-name-is-very-long-truncat-vm-.*/
+          expect(name.size).to eq 80
+        end
       end
     end
 
