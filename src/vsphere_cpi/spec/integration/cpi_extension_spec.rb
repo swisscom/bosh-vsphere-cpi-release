@@ -99,8 +99,8 @@ describe '#add cpi extension' do
         [],
         {'key' => 'value'}
       )
-      vm = @cpi.client.find_vm_by_name(@cpi.datacenter.mob, @vm_cid)
-      expect(vm.config.managed_by).to be_nil
+      vm = cpi.vm_provider.find(vm_cid)
+      expect(vm.mob.config.managed_by).to be_nil
     end
   end
 end

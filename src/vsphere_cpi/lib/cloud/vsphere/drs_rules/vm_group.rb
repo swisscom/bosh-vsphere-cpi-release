@@ -17,7 +17,7 @@ module VSphereCloud
     # @param [Vim::VirtualMachine] vm
     # @params [String] vm_group_name
     def add_vm_to_vm_group(vm, vm_group_name)
-      DrsLock.new(@vm_attribute_manager, DRS_LOCK_VMGROUP ).with_drs_lock do
+      # DrsLock.new(@vm_attribute_manager, DRS_LOCK_VMGROUP ).with_drs_lock do
         vm_group = find_vm_group(vm_group_name)
         logger.debug("VmGroup: #{vm_group_name} already exists") unless vm_group.nil?
 
@@ -35,7 +35,7 @@ module VSphereCloud
 
         logger.debug("Adding VM to VM group: #{vm_group_name}")
         reconfigure_cluster(config_spec)
-      end
+      # end
     end
 
     # Delete VM Groups if they are empty
@@ -43,7 +43,7 @@ module VSphereCloud
     def delete_vm_groups(vm_group_names)
       return if vm_group_names.empty?
       vm_attribute_manager = VMAttributeManager.new(@client.service_content.custom_fields_manager)
-      DrsLock.new(vm_attribute_manager, DRS_LOCK_VMGROUP ).with_drs_lock do
+      DrsLock.new(vm_attribute_manager, DRS_LOCK_VMGROUP, @client, "vm_group" ).with_drs_lock do
         empty_vm_groups = @cluster.configuration_ex.group.select do |group|
           group.is_a?(VimSdk::Vim::Cluster::VmGroup) && vm_group_names.include?(group.name) && group.vm.empty?
         end
@@ -67,7 +67,6 @@ module VSphereCloud
       end
     end
 
-    private
 
     def find_vm_group(vm_group_name)
       @cluster.configuration_ex.group.find do |group|
@@ -75,6 +74,7 @@ module VSphereCloud
       end
     end
 
+    private
     def reconfigure_cluster(config_spec)
       @client.wait_for_task do
         @cluster.reconfigure_ex(config_spec, true)
