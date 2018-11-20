@@ -123,12 +123,12 @@ module VSphereCloud
           # placement_spec.datastores = [datastore.mob]
           # placement_spec.hosts = cluster.host_group_mob.host
           # placement_result = cluster.mob.place_vm(placement_spec)
-          # require 'pry-byebug'
-          # binding.pry
+          # raise "No suitable host found by DRS in host group to create VM" if placement_result.recommendations&.empty?
           # begin
-          #   host = placement_result.recommendations.first.action.first.target_host.name
+          #   host = placement_result.recommendations.first.action.first.target_host
+          # # if for some reason, above fails select host manually.
           # rescue => e
-          #   logger.warning("received #{e} while asking DRS for recommendation")
+          #   logger.warning("Received #{e} while asking DRS for recommendation")
           #   host = cluster.host_group_mob.host.find do |host|
           #     host.runtime.connection_state == 'connected' &&
           #       !host.runtime.in_maintenance_mode
@@ -141,6 +141,7 @@ module VSphereCloud
             host.runtime.connection_state == 'connected' &&
               !host.runtime.in_maintenance_mode
           end
+          raise "Failed to find a healthy host in #{cluster.host_group} to create the VM." if host.nil?
         end
 
 
@@ -184,7 +185,7 @@ module VSphereCloud
           # Add vm to VM Group present in vm_type
           add_vm_to_vm_group(vm_config.vm_type.vm_group, created_vm_mob, cluster)
 
-          unless cluster.host_group.nil?
+          if !cluster.host_group.nil?
             # Add vm to VMGroup listed in the cluster description
             add_vm_to_vm_group(cluster.vm_group, created_vm.mob, cluster)
             # Create VM/Host affinity rule
@@ -264,7 +265,7 @@ module VSphereCloud
         @client,
         cluster.mob
       )
-      drs_rule.add_vm_host_affinity_rule(vm_mob, cluster.vm_group, cluster.host_group)
+      drs_rule.add_vm_host_affinity_rule(cluster.vm_group, cluster.host_group)
     end
   end
 end

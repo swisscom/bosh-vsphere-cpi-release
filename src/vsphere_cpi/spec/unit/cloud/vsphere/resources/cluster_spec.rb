@@ -394,7 +394,6 @@ module VSphereCloud::Resources
           instance_double(
             'VSphereCloud::ClusterConfig',
             name: 'fake-cluster-name',
-            resource_pool: 'fake-resource-pool',
             host_group: 'vcpi-hg1'*20,
           )
         end
@@ -413,8 +412,7 @@ module VSphereCloud::Resources
             instance_double(
               'VSphereCloud::ClusterConfig',
               name: 'fake-cluster-name',
-              resource_pool: 'fake-resource-pool',
-              host_group: 'fake-host-group'
+              host_group: 'fake-host-group',
             )
           end
           it 'returns name of the defined host Group)' do
@@ -433,7 +431,6 @@ module VSphereCloud::Resources
             instance_double(
               'VSphereCloud::ClusterConfig',
               name: 'fake-cluster-name',
-              resource_pool: 'fake-resource-pool',
               host_group: 'fake-host-group',
             )
           end
@@ -456,7 +453,6 @@ module VSphereCloud::Resources
             instance_double(
               'VSphereCloud::ClusterConfig',
               name: 'fake-cluster-name',
-              resource_pool: 'fake-resource-pool',
               host_group: 'fake-host-group',
             )
           end
@@ -473,7 +469,6 @@ module VSphereCloud::Resources
             instance_double(
               'VSphereCloud::ClusterConfig',
               name: 'fake-cluster-name',
-              resource_pool: 'fake-resource-pool',
               host_group: 'fake-host-group',
             )
           end
@@ -522,7 +517,6 @@ module VSphereCloud::Resources
           instance_double(
             'VSphereCloud::ClusterConfig',
             name: 'fake-cluster-name',
-            resource_pool: 'fake-resource-pool',
             host_group: 'fake-host-group',
           )
         end

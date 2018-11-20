@@ -64,19 +64,17 @@ module VSphereCloud
         # vm-host group rules associated with it.
         #
         # @TODO : CAVEAT: if anyone creates a rule outside of CPI using these
-        # vm_groupS, IT will be deleted too. To narrow
+        # vm_groups, it will be deleted too. To narrow
         # the scope of this caveat, CPI will only delete the
         # vm-host-group-affinity rule type. This is because, currently it only
         # creates vm-host-affinity rule using vm groups.
-        #
-        # Long Term Solution is to disallow admin to specify their own rule
-        # names and CPI generates a rule name from vm_group and hence will be
-        # able to identify correct rule to be deleted.
         rules_spec = get_delete_rule_spec(empty_vm_groups) unless empty_vm_groups.nil?
-        logger.debug("Deleting #{rules_spec.count} vm host affinity rules") if rules_spec
         config_spec = VimSdk::Vim::Cluster::ConfigSpecEx.new
         config_spec.group_spec = group_specs
-        config_spec.rules_spec = rules_spec
+        unless rules_spec&.empty?
+          logger.debug("Deleting #{rules_spec.count} vm host affinity rules")
+          config_spec.rules_spec = rules_spec
+        end
         @client.wait_for_task do
           @cluster.reconfigure_ex(config_spec, true)
         end
@@ -85,10 +83,11 @@ module VSphereCloud
 
     private
     def get_delete_rule_spec(empty_vm_groups)
+      # returning empty array for consistent return type.
       if @cluster.configuration_ex.rule.nil?
-        return nil
+        return []
       end
-      rules_spec= empty_vm_groups&.each_with_object([]) do |vm_group, rules_spec|
+      rules_spec= empty_vm_groups.each_with_object([]) do |vm_group, rules_spec|
         # Filter rules for deletion
         rule_keys = @cluster.configuration_ex.rule.select do |rule_info|
           rule_info.is_a?(VimSdk::Vim::Cluster::VmHostRuleInfo) && \

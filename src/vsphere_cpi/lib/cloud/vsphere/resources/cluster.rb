@@ -47,7 +47,7 @@ module VSphereCloud
         # Have to use separate mechanisms for fetching utilization depending on
         # whether we're using resource pools or raw clusters.
         if @config.resource_pool.nil?
-          #$ Get cluster utilization only if host group is nil
+          # Get cluster utilization only if host group is nil
           @synced_free_memory = if host_group.nil?
             fetch_cluster_utilization
           else
@@ -58,8 +58,7 @@ module VSphereCloud
         end
       end
 
-      # Returns a vm host affinity rule name if specified in cluster config. Otherwise,
-      # it returns a default name made from host group and vm group.
+      # Returns a default name made from host group and vm group.
       #
       # @return [String] Name of the host VM affinity rule name.
       def vm_host_affinity_rule_name
@@ -81,7 +80,7 @@ module VSphereCloud
 
       # it returns a default name created by adding suffix to host group name
       #
-      # @return [String] Name of the VM Group specified under a cluster config.
+      # @return [String] Name of the VM Group
       def vm_group
         return nil if host_group.nil?
         return "vm_group-#{(0...6).map { (97 + rand(26)).chr }.join}" if host_group.length > 100
@@ -100,16 +99,13 @@ module VSphereCloud
       # Caches and returns the list of hosts under a cluster resource. It might
       # be different from total hosts in a cluster if a host group is specified.
       #
-      # In case a host group is present only the hosts under the host group are
+      # If a host group is present,  only the hosts under the host group are
       # considered.
-      #
-      # If the host group does not exist/wrong it returns all the hosts
       #
       # @return [List] List of hosts in the cluster resource.
       def host
         return @host if @host
-        cluster_host_group_mob = host_group_mob
-        @host = cluster_host_group_mob.nil? ? mob.host : cluster_host_group_mob.host
+        @host = host_group_mob.nil? ? mob.host : host_group_mob.host
       end
 
       # @return [String] cluster name.

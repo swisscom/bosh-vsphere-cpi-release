@@ -36,7 +36,7 @@ module VSphereCloud
     # @param [Vim::VirtualMachine] vm
     # @param [String] vm_group_name
     # @param [String] host_group_name
-    def add_vm_host_affinity_rule(vm, vm_group_name, host_group_name)
+    def add_vm_host_affinity_rule(vm_group_name, host_group_name)
       DrsLock.new(@vm_attribute_manager, DRS_LOCK_HOST_VM_GROUP).with_drs_lock do
         rule = find_rule
         # Do not create the rule if it already exists
@@ -73,10 +73,6 @@ module VSphereCloud
     def update_rule(rule_key)
       logger.debug("Updating DRS rule: #{@rule_name}")
       add_anti_affinity_rule(VimSdk::Vim::Option::ArrayUpdateSpec::Operation::EDIT, rule_key)
-    end
-
-    def find_vm_group(vm_group_name)
-      @datacenter_cluster.configuration_ex.group.find { |group| group.name == vm_group_name && group.is_a?(VimSdk::Vim::Cluster::VmGroup)}
     end
 
     def create_vm_host_affinity_rule(vm_group_name, host_group_name)

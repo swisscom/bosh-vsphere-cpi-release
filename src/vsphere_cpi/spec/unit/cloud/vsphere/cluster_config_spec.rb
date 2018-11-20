@@ -8,8 +8,6 @@ module VSphereCloud
       {
         'resource_pool' => 'fake-resource-pool',
         'host_group' => 'fake-host-group',
-        'vm_group' => 'fake-vm-group',
-        'vm_host_affinity_rule_name' => 'fake-vm-host-affinity-rule',
       }
     end
 

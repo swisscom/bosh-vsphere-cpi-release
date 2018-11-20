@@ -93,7 +93,7 @@ describe VSphereCloud::VmGroup, fake_logger: true do
     context 'when vm_group is empty' do
       let(:vms) { [] }
       before do
-        allow(configuration_ex).to receive(:rule).and_return(nil)
+        allow(configuration_ex).to receive(:rule).and_return([])
       end
       it 'should delete the vm group' do
         with_lock do
@@ -120,18 +120,26 @@ describe VSphereCloud::VmGroup, fake_logger: true do
         allow(configuration_ex).to receive(:rule).and_return(nil)
       end
       it 'returns nil' do
-        expect(vm_group.send(:get_delete_rule_spec, *[vm_groups])).to be(nil)
+        expect(vm_group.send(:get_delete_rule_spec, *[vm_groups])).to be_empty
       end
     end
-    context 'when vm_groups passed are empty' do
+    context 'when no rule exists and rule array is empty' do
+      before do
+        allow(configuration_ex).to receive(:rule).and_return([])
+      end
+      it 'returns empty array' do
+        expect(vm_group.send(:get_delete_rule_spec, *[vm_groups])).to be_empty
+      end
+    end
+    context 'when vm_groups are absent' do
       before do
         allow(configuration_ex).to receive(:rule).and_return(['fake-rule'])
       end
       it 'returns nil' do
-        expect(vm_group.send(:get_delete_rule_spec, *[nil])).to be(nil)
+        expect(vm_group.send(:get_delete_rule_spec, *[[]])).to be_empty
       end
     end
-    context 'when vm groups passed are not empty' do
+    context 'when vm groups are present' do
       context 'when there are three rules of which one is deletable' do
         let(:rule_1) do
           VimSdk::Vim::Cluster::VmHostRuleInfo.new(key: 'rule_1' , vm_group_name: 'reject-vm-group')
