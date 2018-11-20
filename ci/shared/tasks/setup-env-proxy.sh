@@ -27,3 +27,5 @@ trap master_exit EXIT
 
 # let CLI know via environment variable
 export BOSH_ALL_PROXY=socks5://localhost:5000
+
+export BOSH_VSPHERE_CPI_USER=administrator@vsphere.local
