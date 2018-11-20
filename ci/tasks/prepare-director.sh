@@ -18,7 +18,7 @@ set -e
 # resolve to both managed objects thus causing the aforementioned error.
 unambiguous_ds=isc-cl1-ds-1
 
-source environment/metadata
+source source-ci/ci/shared/tasks/setup-env-proxy.sh
 
 # Bosh is give internal ip of 192.168.111.152
 # This is because on Nimbus
