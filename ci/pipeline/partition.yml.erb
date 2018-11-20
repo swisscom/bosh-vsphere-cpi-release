@@ -2,6 +2,8 @@
     plan:
     - aggregate:
       - get: source-ci
+      - get: 45m
+        trigger: true
       - get: bosh-cpi-src
         trigger: true
         passed: [unit-test]

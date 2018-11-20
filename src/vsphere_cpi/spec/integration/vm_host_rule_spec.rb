@@ -1,6 +1,6 @@
 require 'integration/spec_helper'
 
-describe 'Host Groups in Cluster and VM Host Rules' do
+describe 'Host Groups in Cluster and VM Host Rules', vm_host_group: true do
   context 'when host groups are defined in AZ' do
     before(:all) do
       @datacenter_name = fetch_and_verify_datacenter('BOSH_VSPHERE_CPI_DATACENTER')

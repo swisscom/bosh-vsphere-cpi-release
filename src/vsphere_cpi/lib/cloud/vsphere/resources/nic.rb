@@ -36,7 +36,9 @@ module VSphereCloud
         nic.key = -1
         nic.controller_key = controller_key
         nic.backing = backing_info
-
+        # @TODO: Remove this when DRS bug inplaceVm is fixed.
+        nic.connectable=VimSdk::Vim::Vm::Device::VirtualDevice::ConnectInfo.new
+        nic.connectable.start_connected=true
         nic
       end
     end
