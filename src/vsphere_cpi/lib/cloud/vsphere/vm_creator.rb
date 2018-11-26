@@ -167,6 +167,8 @@ module VSphereCloud
           # Power on VM
           logger.info("Powering on VM: #{created_vm}")
           created_vm.power_on
+          # Now we want to PIN the VM.
+          pin_vm(cluster, created_vm) if vm_config.vm_type.pin_vm
         rescue => e
           e.vm_cid = vm_config.name if e.instance_of?(Cloud::NetworkException)
           logger.info("#{e} - #{e.backtrace.join("\n")}")
@@ -185,6 +187,27 @@ module VSphereCloud
     end
 
     private
+
+    def pin_vm(vm_resource, cluster_resource)
+      DrsLock.new(@vm_attribute_manager, 'PIN_VM_LOCK').with_drs_lock do
+        drs_vm_spec_exists = !cluster_resource.mob.configuration_ex.drs_vm_config.empty?
+
+        drs_vm_spec = VimSdk::Vim::Cluster::DrsVmConfigSpec.new
+        drs_vm_spec.info = VimSdk::Vim::Cluster::DrsVmConfigInfo.new
+        drs_vm_spec.info.enabled = false
+        drs_vm_spec.info.vm = vm_resource.mob
+
+        config_spec = VimSdk::Vim::Cluster::ConfigSpecEx.new
+        config_spec.drs_vm_config_spec = [drs_vm_spec]
+        config_spec.operation =  group_spec.operation = drs_vm_spec_exists ? VimSdk::Vim::Option::ArrayUpdateSpec::Operation::EDIT : VimSdk::Vim::Option::ArrayUpdateSpec::Operation::ADD
+
+        logger.debug("Pinning the VM: #{vm_resource.cid}")
+        @client.wait_for_task do
+          cluster_resource.mob.reconfigure_ex(config_spec, true)
+        end
+      end
+      logger.debug("VM is pinned")
+    end
 
     def should_create_auto_drs_rule(vm_config, cluster)
       return @enable_auto_anti_affinity_drs_rules && vm_config.drs_rule(cluster).nil? && !vm_config.bosh_group.nil?
