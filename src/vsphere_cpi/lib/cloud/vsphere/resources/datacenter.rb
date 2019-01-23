@@ -67,15 +67,18 @@ module VSphereCloud
       end
 
       def clusters
-        logger.debug("All clusters provided: #{@clusters}")
-        @clusters.keys.map do |cluster_name|
-          find_cluster(cluster_name)
+        logger.debug("All clusters provided in datacenter config: #{@clusters}")
+        @clusters.map do |cluster_config|
+          @cluster_provider.find(cluster_config.name, cluster_config)
         end
       end
 
       def find_cluster(cluster_name)
-        cluster_config = @clusters[cluster_name]
-        @cluster_provider.find(cluster_name, cluster_config)
+        @clusters.select do |cluster_config|
+          cluster_config.name == cluster_name
+        end.map do |cluster_config|
+         @cluster_provider.find(cluster_config.name, cluster_config)
+        end.first
       end
 
       def find_datastore(datastore_name)

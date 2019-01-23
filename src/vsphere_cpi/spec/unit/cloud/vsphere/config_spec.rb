@@ -325,26 +325,95 @@ module VSphereCloud
 
     describe '#datacenter_clusters' do
 
+      context 'when there is no cluster' do
+        before do
+          datacenters.first['clusters'] = []
+        end
+
+        it 'returns empty datacenter cluster list' do
+          expect(config.datacenter_clusters).to be_empty
+        end
+
+      end
+
+      context 'when there is only one cluster without any config map' do
+        before do
+          datacenters.first['clusters'] = ['fake-cluster-1']
+        end
+
+        it 'returns the datacenter clusters' do
+          expect(config.datacenter_clusters.length).to eq(1)
+          (0..0).each do |index|
+            actual_config = config.datacenter_clusters[index]
+            expected_config = datacenters.first['clusters'][index]
+            expect(actual_config.name).to eq(expected_config)
+            expect(actual_config.resource_pool).to be_nil
+          end
+        end
+
+      end
+
       context 'when there is more than one cluster' do
         before do
           datacenters.first['clusters'] = [
             { 'fake-cluster-1' => { 'resource_pool' => 'fake-resource-pool-1' } },
-            { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-2' } }
+            { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-2' } },
+            { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-3' } },
           ]
         end
 
         it 'returns the datacenter clusters' do
-          expect(config.datacenter_clusters['fake-cluster-1'].name).to eq('fake-cluster-1')
-          expect(config.datacenter_clusters['fake-cluster-1'].resource_pool).to eq('fake-resource-pool-1')
-
-          expect(config.datacenter_clusters['fake-cluster-2'].name).to eq('fake-cluster-2')
-          expect(config.datacenter_clusters['fake-cluster-2'].resource_pool).to eq('fake-resource-pool-2')
+          expect(config.datacenter_clusters.length).to eq(3)
+          (0..2).each do |index|
+            actual_config = config.datacenter_clusters[index]
+            expected_config = datacenters.first['clusters'][index]
+            expect(actual_config.name).to eq(expected_config.keys.first)
+            expect(actual_config.resource_pool).to eq(expected_config[expected_config.keys.first]['resource_pool'])
+          end
         end
+
+      end
+
+      context 'when the clusters are a mix of Hash and direct entry without cloud property Hash' do
+        before do
+          datacenters.first['clusters'] = [
+              { 'fake-cluster-1' => { 'resource_pool' => 'fake-resource-pool-1' } },
+              { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-2' } },
+              { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-3' } },
+              'fake-cluster-3',
+          ]
+        end
+
+        it 'returns the datacenter clusters' do
+          expect(config.datacenter_clusters.length).to eq(4)
+          (0..3).each do |index|
+            actual_config = config.datacenter_clusters[index]
+            expected_config = datacenters.first['clusters'][index]
+            if index < 3
+              expect(actual_config.name).to eq(expected_config.keys.first)
+              expect(actual_config.resource_pool).to eq(expected_config[expected_config.keys.first]['resource_pool'])
+            else
+              expect(actual_config.name).to eq(expected_config)
+              expect(actual_config.resource_pool).to be_nil
+            end
+          end
+        end
+
       end
 
       context 'when the cluster is not found' do
+        before do
+          datacenters.first['clusters'] = [
+              { 'fake-cluster-1' => { 'resource_pool' => 'fake-resource-pool-1' } },
+              { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-2' } },
+              { 'fake-cluster-2' => { 'resource_pool' => 'fake-resource-pool-3' } },
+              'fake-cluster-3',
+          ]
+        end
+
         it 'returns the datacenter clusters' do
-          expect(config.datacenter_clusters['does-not-exist']).to be_nil
+          expect(config.datacenter_clusters.length).to eq(4)
+          expect(config.datacenter_clusters.select {|cluster_config| cluster_config.name == 'does-not-exist'}).to be_empty
         end
       end
 
@@ -363,11 +432,11 @@ module VSphereCloud
         end
 
         it 'returns the datacenter clusters' do
-          expect(config.datacenter_clusters['fake-cluster-1'].name).to eq('fake-cluster-1')
-          expect(config.datacenter_clusters['fake-cluster-1'].resource_pool).to be(nil)
+          expect(config.datacenter_clusters[0].name).to eq('fake-cluster-1')
+          expect(config.datacenter_clusters[0].resource_pool).to be(nil)
 
-          expect(config.datacenter_clusters['fake-cluster-2'].name).to eq('fake-cluster-2')
-          expect(config.datacenter_clusters['fake-cluster-2'].resource_pool).to eq('fake-resource-pool-2')
+          expect(config.datacenter_clusters[1].name).to eq('fake-cluster-2')
+          expect(config.datacenter_clusters[1].resource_pool).to eq('fake-resource-pool-2')
         end
       end
 
@@ -386,11 +455,11 @@ module VSphereCloud
         end
 
         it 'returns the datacenter clusters' do
-          expect(config.datacenter_clusters['fake-cluster-1'].name).to eq('fake-cluster-1')
-          expect(config.datacenter_clusters['fake-cluster-1'].resource_pool).to be(nil)
+          expect(config.datacenter_clusters[0].name).to eq('fake-cluster-1')
+          expect(config.datacenter_clusters[0].resource_pool).to be(nil)
 
-          expect(config.datacenter_clusters['fake-cluster-2'].name).to eq('fake-cluster-2')
-          expect(config.datacenter_clusters['fake-cluster-2'].resource_pool).to be(nil)
+          expect(config.datacenter_clusters[1].name).to eq('fake-cluster-2')
+          expect(config.datacenter_clusters[1].resource_pool).to be(nil)
         end
       end
 

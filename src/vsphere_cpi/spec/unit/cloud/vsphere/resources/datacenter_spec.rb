@@ -7,10 +7,7 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
       name: datacenter_name,
       vm_folder: 'fake-vm-folder',
       template_folder: 'fake-template-folder',
-      clusters: {
-        'first-cluster' => cluster_config1,
-        'second-cluster' => cluster_config2
-      },
+      clusters: cluster_configurations,
       cluster_provider: cluster_provider,
       disk_path: 'fake-disk-path',
       ephemeral_pattern: ephemeral_pattern,
@@ -18,8 +15,8 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
       use_sub_folder: datacenter_use_sub_folder
     )
   end
+  let(:cluster_configurations) { [cluster_config1, cluster_config2] }
   let(:client) { instance_double('VSphereCloud::VCenterClient') }
-
   let(:vm_folder) { instance_double('VSphereCloud::Resources::Folder') }
   let(:vm_subfolder) { instance_double('VSphereCloud::Resources::Folder') }
 
@@ -58,9 +55,20 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
       free_memory: 1024,
       accessible_datastores: {
         small_datastore.name => small_datastore,
-      }
+      }, resource_pool: nil,
     )
   end
+
+  let(:first_cluster_with_rp) do
+    instance_double(
+        'VSphereCloud::Resources::Cluster',
+        free_memory: 1024,
+        accessible_datastores: {
+            small_datastore.name => small_datastore,
+        }, resource_pool: 'fake-resource-pool',
+    )
+  end
+
   let(:second_cluster) do
     instance_double(
       'VSphereCloud::Resources::Cluster',
@@ -75,6 +83,7 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
   let(:cluster_mob2) { instance_double('VimSdk::Vim::Cluster') }
   let(:cluster_config1) { instance_double('VSphereCloud::ClusterConfig', resource_pool: nil, name: 'first-cluster') }
   let(:cluster_config2) { instance_double('VSphereCloud::ClusterConfig', resource_pool: nil, name: 'second-cluster') }
+  let(:cluster_config3) { instance_double('VSphereCloud::ClusterConfig', resource_pool: 'fake-resource-pool', name: 'first-cluster') }
 
   let(:ephemeral_pattern) {instance_double('Regexp')}
   let(:persistent_pattern) { 'persistent.*' }
@@ -138,6 +147,9 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
     allow(cluster_provider).to receive(:find)
       .with('second-cluster', cluster_config2)
       .and_return(second_cluster)
+    allow(cluster_provider).to receive(:find)
+       .with('first-cluster', cluster_config3)
+       .and_return(first_cluster_with_rp)
   end
 
   describe '#mob' do
@@ -154,6 +166,38 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
 
     end
   end
+
+   describe '#find_cluster' do
+     context 'when same cluster exists twice with first definition having no resource pool' do
+       let(:cluster_configurations) { [cluster_config1, cluster_config2, cluster_config3] }
+       it 'returns first cluster among clusters matching name' do
+         cluster = datacenter.find_cluster('first-cluster')
+         expect(cluster).to eq(first_cluster)
+         expect(cluster.resource_pool).to be_nil
+       end
+     end
+
+     context 'when same cluster exists twice with first definition having a resource pool' do
+       let(:cluster_configurations) { [cluster_config3, cluster_config2, cluster_config1] }
+       it 'returns first cluster among clusters matching name' do
+         cluster = datacenter.find_cluster('first-cluster')
+         expect(cluster).to eq(first_cluster_with_rp)
+         expect(cluster.resource_pool).to eq('fake-resource-pool')
+       end
+     end
+
+     context 'when cluster does not exist' do
+       before do
+        allow(cluster_provider).to receive(:find)
+          .and_raise('fake-error')
+       end
+       it 'raises an exception' do
+         expect {
+           datacenter.find_cluster('first-cluster')
+         }.to raise_error('fake-error')
+       end
+     end
+   end
 
   describe '#vm_folder' do
     context 'when datacenter does not use subfolders' do
@@ -212,28 +256,6 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
   describe '#clusters' do
     it 'returns a list of cluster object' do
       expect(datacenter.clusters).to eq([ first_cluster, second_cluster ])
-    end
-  end
-
-  describe '#find_cluster' do
-    context 'when cluster exists' do
-      it 'return the cluster' do
-        cluster = datacenter.find_cluster('first-cluster')
-        expect(cluster).to eq(first_cluster)
-      end
-    end
-
-    context 'when cluster does not exist' do
-      before do
-        allow(cluster_provider).to receive(:find)
-          .and_raise('fake-error')
-      end
-
-      it 'raises an exception' do
-        expect {
-          datacenter.find_cluster('first-cluster')
-        }.to raise_error('fake-error')
-      end
     end
   end
 

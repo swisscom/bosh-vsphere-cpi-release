@@ -159,7 +159,7 @@ module VSphereCloud
     end
 
     def datacenter_use_sub_folder
-      datacenter_clusters.any? { |_, cluster| cluster.resource_pool } ||
+      datacenter_clusters.any? { |cluster_config| cluster_config.resource_pool } ||
         !!vcenter_datacenter['use_sub_folder']
     end
 
@@ -246,13 +246,14 @@ module VSphereCloud
     end
 
     def cluster_objs
-      cluster_objs = {}
+      cluster_objs = []
       vcenter_datacenter['clusters'].each do |cluster|
         if cluster.is_a?(Hash)
           name = cluster.keys.first
-          cluster_objs[name] = ClusterConfig.new(name, cluster[name])
+          cluster_objs  << ClusterConfig.new(name, cluster[name])
         else
-          cluster_objs[cluster] = ClusterConfig.new(cluster, {})
+          #cluster_objs[cluster] = ClusterConfig.new(cluster, {})
+          cluster_objs << ClusterConfig.new(cluster, {})
         end
       end
       cluster_objs
