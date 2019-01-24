@@ -366,7 +366,6 @@ module LifecycleHelpers
     )
   end
 
-
   def delete_vm(cpi, vm_id)
     begin
       cpi.delete_vm(vm_id) if vm_id

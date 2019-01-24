@@ -324,36 +324,15 @@ module VSphereCloud
       datastore_path = "[#{datastore.name}] #{disk_folder}"
       logger.debug("Trying to find disk in : #{datastore_path}")
       result = wait_for_task do
-        datastore.mob.browser.search(datastore_path, search_spec)
+        # Perform recursive search as attached persistent disks might be foldered up inside vm named folder
+        datastore.mob.browser.search_sub_folders(datastore_path, search_spec)
       end
-      disk_infos = result.file
-      return nil if disk_infos.empty?
+      disk_infos = result&.first&.file
+      return nil if disk_infos.nil? || disk_infos.empty?
 
       disk_infos.first.capacity_kb / 1024
     rescue VimSdk::SoapError, FileNotFoundException
       nil
-    end
-
-    def disk_path_exists?(vm_mob, disk_path)
-      match = /\[(.+)\] (.+)\/(.+\.vmdk)/.match(disk_path)
-      search_spec_details = VimSdk::Vim::Host::DatastoreBrowser::FileInfo::Details.new
-      search_spec_details.file_type = true # actually return VmDiskInfos not FileInfos
-
-      search_spec = VimSdk::Vim::Host::DatastoreBrowser::SearchSpec.new
-      search_spec.details = search_spec_details
-      search_spec.match_pattern = [match[3]]
-
-      datastore_path = "[#{match[1]}] #{match[2]}"
-      logger.debug("Trying to find disk in : #{datastore_path}")
-      result = wait_for_task do
-        vm_mob.environment_browser.datastore_browser.search(datastore_path, search_spec)
-      end
-      vm_disk_infos = result.file
-      return false if vm_disk_infos.empty?
-
-      true
-    rescue VimSdk::SoapError, FileNotFoundException
-      false
     end
 
     def add_persistent_disk_property_to_vm(vm, disk)

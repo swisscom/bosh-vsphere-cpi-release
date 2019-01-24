@@ -416,7 +416,6 @@ describe VSphereCloud::Resources::VM, fake_logger: true do
       end
       before do
         allow(vm).to receive(:get_old_disk_filepath).and_return("[datastore x] #{restore_path}/old-file-name.vmdk")
-        allow(client).to receive(:disk_path_exists?).and_return(false)
       end
       it 'renames the disk to its original name' do
         expect(client).to receive(:reconfig_vm) do |mob, spec|

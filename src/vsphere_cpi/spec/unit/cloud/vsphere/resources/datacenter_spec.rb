@@ -498,13 +498,13 @@ describe VSphereCloud::Resources::Datacenter, fake_logger: true do
     end
     let(:vm_cid) {'vm-fake-vm'}
     it 'forwards the call to the client with the correct args' do
-      target_path = "[#{datastore.name}] #{vm_cid}/fake-disk-cid.vmdk"
+      target_path = "[#{datastore.name}] #{datacenter.disk_path}/#{vm_cid}/fake-disk-cid.vmdk"
       expect(client).to receive(:move_disk).with(datacenter_mob, disk.path, datacenter_mob, target_path)
       expect(VSphereCloud::Resources::PersistentDisk).to receive(:new).with(
         cid: 'fake-disk-cid',
         size_in_mb: 1024,
         datastore: datastore,
-        folder: "#{vm_cid}"
+        folder: "#{datacenter.disk_path}/#{vm_cid}"
       ).and_call_original
       new_disk = datacenter.move_disk_to_datastore(disk, datastore, vm_cid)
       expect(new_disk.path).to eq(target_path)

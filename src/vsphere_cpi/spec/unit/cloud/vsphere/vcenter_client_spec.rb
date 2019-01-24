@@ -494,7 +494,7 @@ module VSphereCloud
         end
 
         it 'returns true' do
-          expect(datastore_browser).to receive(:search).with('[fake-datastore] fake-disk-folder', anything).and_return(task)
+          expect(datastore_browser).to receive(:search_sub_folders).with('[fake-datastore] fake-disk-folder', anything).and_return(task)
           expect(task_runner).to receive(:run) do |*args, &block|
             expect(block.call).to eq(task)
             disk_infos
@@ -509,65 +509,12 @@ module VSphereCloud
         end
 
         it 'returns false if the path does not' do
-          expect(datastore_browser).to receive(:search).with('[fake-datastore] fake-disk-folder', anything).and_return(task)
+          expect(datastore_browser).to receive(:search_sub_folders).with('[fake-datastore] fake-disk-folder', anything).and_return(task)
           expect(task_runner).to receive(:run) do |*args, &block|
             expect(block.call).to eq(task)
             disk_infos
           end
           expect(client.find_disk_size_using_browser(datastore, 'fake-disk-cid', 'fake-disk-folder')).to be_nil
-        end
-      end
-    end
-
-    describe '#disk_path_exists?' do
-      let(:vm_mob) { double('VimSdk::Vim::Vm') }
-      let(:environment_browser) { instance_double(VimSdk::Vim::EnvironmentBrowser) }
-      let(:datastore_browser) { instance_double(VimSdk::Vim::Host::DatastoreBrowser) }
-      let(:task) { instance_double(VimSdk::Vim::Task) }
-      let(:vm_disk_infos) { double('VmDisksInfos') }
-      let(:properties) {
-        {
-          task => {
-            'info.progress' => 0,
-            'info.state' => VimSdk::Vim::TaskInfo::State::SUCCESS,
-            'info.result' => vm_disk_infos,
-            'info.error' => nil,
-          }
-        }
-      }
-
-      before do
-        allow(environment_browser).to receive(:datastore_browser).and_return(datastore_browser)
-        allow(vm_mob).to receive(:environment_browser).and_return(environment_browser)
-      end
-
-      context 'path exists' do
-        before do
-          allow(vm_disk_infos).to receive(:file).and_return(['some-file'])
-        end
-
-        it 'returns true' do
-          expect(datastore_browser).to receive(:search).with('[datastore-name] disk-folder', anything).and_return(task)
-          expect(task_runner).to receive(:run) do |*args, &block|
-            expect(block.call).to eq(task)
-            vm_disk_infos
-          end
-          expect(client.disk_path_exists?(vm_mob, '[datastore-name] disk-folder/disk-key.vmdk')).to be(true)
-        end
-      end
-
-      context 'path does not exist' do
-        before do
-          allow(vm_disk_infos).to receive(:file).and_return([])
-        end
-
-        it 'returns false if the path does not' do
-          expect(task_runner).to receive(:run) do |*args, &block|
-            expect(block.call).to eq(task)
-            vm_disk_infos
-          end
-          expect(datastore_browser).to receive(:search).with('[datastore-name] disk-folder', anything).and_return(task)
-          expect(client.disk_path_exists?(vm_mob, '[datastore-name] disk-folder/disk-key.vmdk')).to be(false)
         end
       end
     end

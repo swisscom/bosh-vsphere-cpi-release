@@ -185,12 +185,22 @@ module VSphereCloud
       # @param vm_cid [String] Name of the VM from which parent disk folder is created on the destination datastore
       #
       # @return [VSphereCloud::Resources::PersistentDisk] The new disk object with updated datastore & folder name
-      def move_disk_to_datastore(disk, destination_datastore, vm_cid)
-        destination_path = "[#{destination_datastore.name}] #{vm_cid}/#{disk.cid}.vmdk"
+      def move_disk_to_datastore(disk, destination_datastore, vm_cid=nil)
+        # Folder up disks inside master disk folder.
+        #
+        # This is done to reduce performance hit we might have to take up to search disks later. Disks are always
+        # searched in the default datacenter master disk folder. If we were to folder up disk outside
+        # master-disk-folder, we will need to perform recursive disk search on root datastore folder
+        # (MIGHT BE VERY COSTLY).
+        #
+        # So, we folder up inside master-disk-folder and recursively search only in master-disk-folder, which will be
+        # relativel inexpensive operation.
+        folder_path = "#{@disk_path}/#{vm_cid}"
+        destination_path = "[#{destination_datastore.name}] #{folder_path}/#{disk.cid}.vmdk"
         logger.info("Moving #{disk.path} to #{destination_path}")
         @client.move_disk(mob, disk.path, mob, destination_path)
         logger.info('Moved disk successfully')
-        Resources::PersistentDisk.new(cid: disk.cid, size_in_mb: disk.size_in_mb, datastore: destination_datastore, folder: vm_cid)
+        Resources::PersistentDisk.new(cid: disk.cid, size_in_mb: disk.size_in_mb, datastore: destination_datastore, folder: folder_path)
       end
 
       private
@@ -205,6 +215,9 @@ module VSphereCloud
         datastores.each do |_, datastore|
           pool.process do
             begin
+              # We only try to locate disk in master disk folder(@disk_path). This is the only way to search
+              # a conventional vmdk in vSphere.
+              # The other way is to use FCD and search them by their UUID.
               disk = @client.find_disk(disk_cid, datastore, @disk_path)
               unless disk.nil?
                 logger.debug("disk #{disk_cid} found in: #{datastore}")

@@ -274,9 +274,8 @@ module VSphereCloud
         #   2. We can say above ^^ beause it might be the reason SDRS moved it.
         #      If SDRS did not move it, it cannot have different source_ds than current_ds
         #
-        # Also now all detached disks must move as all persistent disks are always foldered up whjile attaching them.
-        #
-        # Move all disks to restore path.
+        # Also now all detached persistent disks must move as all persistent disks are always foldered up
+        # while attaching them.
         move_disks_to_old_path(virtual_disks, restore_path)
 
         logger.info('Finished detaching disk(s)')
@@ -293,7 +292,7 @@ module VSphereCloud
         disks_to_move.each do |disk|
           current_datastore = disk.backing.file_name.match(/^\[([^\]]+)\]/)[1]
           original_disk_path = get_old_disk_filepath(disk.key)
-          dest_filename = original_disk_path.match(/^\[[^\]]+\] (.*)/)[1].split('/')[1]
+          dest_filename = original_disk_path.match(/^\[[^\]]+\] (.*)/)[1].split('/').last
           dest_path = "[#{current_datastore}] #{restore_path}/#{dest_filename}"
           logger.info("Moving #{disk.backing.file_name} to #{dest_path}")
           @client.move_disk(datacenter_mob, disk.backing.file_name, datacenter_mob, dest_path)
