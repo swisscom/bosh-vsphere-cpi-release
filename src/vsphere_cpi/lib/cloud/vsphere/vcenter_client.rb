@@ -282,6 +282,24 @@ module VSphereCloud
     end
 
     def create_disk(datacenter_mob, datastore, disk_cid, disk_folder, disk_size_in_mb, disk_type)
+      raise 'no disk type specified' if disk_type.nil?
+      disk_path = "[#{datastore.name}] #{disk_folder}"
+
+      disk_spec = VimSdk::Vim::Vslm::CreateSpec.new
+      disk_spec.backing_spec = VimSdk::Vim::Vslm::CreateSpec::DiskFileBackingSpec.new
+      disk_spec.backing_spec.datastore = datastore.mob
+      disk_spec.backing_spec.path = disk_path
+      disk_spec.backing.provisioning_type=disk_type
+      disk_spec.capacity_in_mb=disk_size_in_mb
+      disk_spec.name=disk_cid
+
+      result = wait_for_task do
+        service_content.v_storage_object_manager.create_disk(disk_spec)
+      end
+      return result.id.id
+    end
+
+    def icreate_disk(datacenter_mob, datastore, disk_cid, disk_folder, disk_size_in_mb, disk_type)
       if disk_type.nil?
         raise 'no disk type specified'
       end
