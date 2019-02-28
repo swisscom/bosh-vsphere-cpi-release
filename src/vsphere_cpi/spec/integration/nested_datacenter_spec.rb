@@ -40,7 +40,7 @@ describe 'nested datacenters', nested_datacenter: true  do
       'static' => {
         'ip' => "169.254.#{rand(1..254)}.#{rand(4..254)}",
         'netmask' => '255.255.254.0',
-        'cloud_properties' => {'name' => nested_datacenter_vlan},
+        'cloud_properties' => {'name' => @nested_datacenter_nested_vlan},
         'default' => ['dns', 'gateway'],
         'dns' => ['169.254.1.2'],
         'gateway' => '169.254.1.3'
@@ -51,16 +51,38 @@ describe 'nested datacenters', nested_datacenter: true  do
   let(:vm_type) do
     {
       'ram' => 512,
-      'disk' => 2048,
+      'disk' => 512,
       'cpu' => 1,
     }
   end
 
   context 'when datacenter is in folder' do
-    let(:nested_datacenter_vlan) { @nested_datacenter_vlan }
+    let(:nested_datacenter_vlan) { @nested_datacenter_nested_vlan }
 
     it 'exercises the vm lifecycle' do
-      nested_datacenter_lifecycle
+      nested_datacenter_stemcell_id = "sc-f9b016fd-67fb-4660-a79c-6e627a800482"
+
+      vm_id = @nested_datacenter_cpi.create_vm(
+          'agent-elba',
+          nested_datacenter_stemcell_id,
+          vm_type,
+          network_spec,
+          [],
+          {'key' => 'value'}
+      )
+      block_on_vmware_tools(@nested_datacenter_cpi, vm_id)
+
+      expect {
+        duplicate_ip_vm_id = @nested_datacenter_cpi.create_vm(
+            'agent-baba',
+            nested_datacenter_stemcell_id,
+            vm_type,
+            network_spec,
+            [],
+            {'key' => 'value'}
+        )
+      }.to raise_error /Detected IP conflicts with other VMs on the same networks/
+
     end
 
     context 'and network is in a folder' do
