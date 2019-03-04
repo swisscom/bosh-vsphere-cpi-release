@@ -79,9 +79,10 @@ module VSphereCloud
           config_spec.managed_by = managed_by_info
         end
 
-
+        require 'pry-byebug'
         dvs_index = {}
         vm_config.vsphere_networks.each do |network_name, ips|
+          binding.pry
           network_mob = @client.find_network(@datacenter, network_name)
           if network_mob.nil?
             raise "Unable to find network '#{network_name}'. Verify that the portgroup exists."
