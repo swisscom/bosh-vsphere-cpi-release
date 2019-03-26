@@ -1491,6 +1491,17 @@ module NSXT
       return data
     end
 
+    def list_ns_groups_paged(opts = {})
+      results = []
+      params = { page_size: 50 }.merge(opts)
+      loop do
+        data, _status_code, _headers = list_ns_groups_with_http_info(params)
+        results += data.results
+        return results if data.results.count < params[:page_size]
+        params[:cursor] = data.cursor
+      end
+    end
+
     # List NSGroups
     # List the NSGroups in a paginated format. The page size is restricted to 50 NSGroups so that the size of the response remains small even in the worst case. Optionally, specify valid member types as request parameter to filter NSGroups. 
     # @param [Hash] opts the optional parameters
